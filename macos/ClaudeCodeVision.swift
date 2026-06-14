@@ -27,6 +27,7 @@ final class VisionApp: NSObject, NSApplicationDelegate {
     private lazy var ctlPath = "\(home)/.claude/vision-proxy/visionctl.sh"
     private lazy var logPath = "\(home)/.claude/vision-proxy.log"
     private lazy var visionConfigPath = "\(home)/.claude/vision-proxy/vision-model.json"
+    private lazy var runtimePath = Bundle.main.resourcePath.map { "\($0)/vision-proxy" } ?? ""
     private lazy var menuIcon: NSImage? = {
         guard let image = NSImage(named: "MenuBarIcon") else {
             return nil
@@ -42,6 +43,7 @@ final class VisionApp: NSObject, NSApplicationDelegate {
             return
         }
         NSApp.setActivationPolicy(.accessory)
+        installBundledRuntimeIfNeeded()
         installEditMenu()
         buildMenu()
         configureButton()
@@ -90,6 +92,68 @@ final class VisionApp: NSObject, NSApplicationDelegate {
             lockFileDescriptor = -1
             try? FileManager.default.removeItem(atPath: lockPath)
         }
+    }
+
+    private func installBundledRuntimeIfNeeded() {
+        guard !runtimePath.isEmpty else {
+            return
+        }
+        let fileManager = FileManager.default
+        let proxyDir = "\(home)/.claude/vision-proxy"
+        let bundledProxy = "\(runtimePath)/proxy.mjs"
+        let bundledCtl = "\(runtimePath)/visionctl.sh"
+        guard fileManager.fileExists(atPath: bundledProxy),
+              fileManager.fileExists(atPath: bundledCtl) else {
+            return
+        }
+
+        try? fileManager.createDirectory(
+            atPath: proxyDir,
+            withIntermediateDirectories: true
+        )
+
+        let files = [
+            "proxy.mjs",
+            "visionctl.sh",
+            "package.json",
+            "package-lock.json"
+        ]
+        for file in files {
+            let source = "\(runtimePath)/\(file)"
+            let destination = "\(proxyDir)/\(file)"
+            guard fileManager.fileExists(atPath: source) else {
+                continue
+            }
+            try? fileManager.removeItem(atPath: destination)
+            try? fileManager.copyItem(atPath: source, toPath: destination)
+        }
+
+        let exampleConfig = "\(runtimePath)/vision-model.example.json"
+        let runtimeConfig = "\(proxyDir)/vision-model.json"
+        if !fileManager.fileExists(atPath: runtimeConfig),
+           fileManager.fileExists(atPath: exampleConfig) {
+            try? fileManager.copyItem(atPath: exampleConfig, toPath: runtimeConfig)
+        }
+
+        try? fileManager.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: "\(proxyDir)/visionctl.sh"
+        )
+
+        if !fileManager.fileExists(atPath: "\(proxyDir)/node_modules/undici") {
+            installNodeDependencies(proxyDir: proxyDir)
+        }
+    }
+
+    private func installNodeDependencies(proxyDir: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["npm", "install", "--omit=dev"]
+        process.currentDirectoryURL = URL(fileURLWithPath: proxyDir)
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
+        process.waitUntilExit()
     }
 
     private func buildMenu() {

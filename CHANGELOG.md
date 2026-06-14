@@ -4,7 +4,7 @@
 
 - Prepare the project for public GitHub release.
 
-## 1.0.0
+## 0.1.0
 
 - Initial macOS menu bar app.
 - Local Anthropic-compatible vision proxy for Claude Code.

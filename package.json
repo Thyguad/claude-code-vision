@@ -1,12 +1,14 @@
 {
   "name": "claude-code-vision",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A macOS menu bar vision proxy for Claude Code and cc-switch.",
   "type": "module",
   "main": "src/proxy.mjs",
   "scripts": {
-    "check": "node --check src/proxy.mjs && bash -n scripts/visionctl.sh && bash -n scripts/install.sh",
+    "check": "node --check src/proxy.mjs && bash -n scripts/visionctl.sh && bash -n scripts/install.sh && bash -n scripts/build-app.sh && bash -n scripts/package-dmg.sh",
     "check:macos": "swiftc macos/ClaudeCodeVision.swift -o /tmp/ClaudeCode-Vision-check",
+    "build:app": "bash scripts/build-app.sh",
+    "package:dmg": "bash scripts/package-dmg.sh",
     "install:app": "bash scripts/install.sh"
   },
   "keywords": [

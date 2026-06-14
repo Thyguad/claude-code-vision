@@ -55,6 +55,20 @@ xcode-select --install
 
 ## 安装
 
+### 方式一：下载 DMG
+
+从 GitHub Releases 下载 `ClaudeCode-Vision-0.1.0.dmg`，打开后把 `ClaudeCode-Vision.app` 拖到 `Applications`。
+
+首次启动时，应用会把内置代理运行时安装到：
+
+```text
+~/.claude/vision-proxy
+```
+
+随后会自动启动本地识图代理。
+
+### 方式二：从源码安装
+
 克隆仓库：
 
 ```bash
@@ -138,6 +152,24 @@ npm install
 ```bash
 npm run check
 npm run check:macos
+```
+
+构建应用包：
+
+```bash
+npm run build:app
+```
+
+生成 DMG：
+
+```bash
+npm run package:dmg
+```
+
+产物位置：
+
+```text
+dist/ClaudeCode-Vision-0.1.0.dmg
 ```
 
 修改后重新安装本地应用：

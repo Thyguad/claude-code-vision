@@ -4,15 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 PROXY_DIR="$CLAUDE_DIR/vision-proxy"
-APP_SUPPORT_DIR="$CLAUDE_DIR/vision-status-app"
 APP_NAME="ClaudeCode-Vision.app"
-APP_SOURCE_DIR="$ROOT_DIR/macos/app-template"
-BUILD_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/claude-code-vision.XXXXXX")"
-APP_BUILD_DIR="$BUILD_ROOT/$APP_NAME"
+APP_BUILD_DIR="$ROOT_DIR/build/$APP_NAME"
 APP_INSTALL_DIR="${APP_INSTALL_DIR:-/Applications/$APP_NAME}"
-trap 'rm -rf "$BUILD_ROOT"' EXIT
 
-mkdir -p "$PROXY_DIR" "$APP_BUILD_DIR/Contents/MacOS" "$APP_BUILD_DIR/Contents/Resources"
+mkdir -p "$PROXY_DIR"
 
 cp "$ROOT_DIR/src/proxy.mjs" "$PROXY_DIR/proxy.mjs"
 cp "$ROOT_DIR/scripts/visionctl.sh" "$PROXY_DIR/visionctl.sh"
@@ -27,9 +23,7 @@ fi
 cd "$PROXY_DIR"
 npm install --omit=dev
 
-cp "$APP_SOURCE_DIR/Contents/Info.plist" "$APP_BUILD_DIR/Contents/Info.plist"
-cp -R "$APP_SOURCE_DIR/Contents/Resources/." "$APP_BUILD_DIR/Contents/Resources/"
-swiftc "$ROOT_DIR/macos/ClaudeCodeVision.swift" -o "$APP_BUILD_DIR/Contents/MacOS/ClaudeCode-Vision"
+"$ROOT_DIR/scripts/build-app.sh" >/dev/null
 
 rm -rf "$APP_INSTALL_DIR"
 cp -R "$APP_BUILD_DIR" "$APP_INSTALL_DIR"
