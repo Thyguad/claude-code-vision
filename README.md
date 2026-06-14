@@ -58,7 +58,7 @@ xcode-select --install
 克隆仓库：
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/claude-code-vision.git
+git clone https://github.com/Thyguad/claude-code-vision.git
 cd claude-code-vision
 bash scripts/install.sh
 ```
