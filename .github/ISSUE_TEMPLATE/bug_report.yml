@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible problem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start ClaudeCode-Vision
+        2. Select provider ...
+        3. Send request ...
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "14.5"
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: "20.18.1"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Remove API keys, tokens, image content, and provider secrets before sharing.
+      render: text

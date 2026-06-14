@@ -1,0 +1,25 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+*.pid
+
+# Local runtime files
+runtime/
+dist/
+build/
+DerivedData/
+
+# Secrets and generated state
+vision-model.json
+upstream.json
+state.json
+image-cache.json
+*.local.json
+
+# Built app bundles
+macos/ClaudeCode-Vision.app/
+*.app/
+*.dmg

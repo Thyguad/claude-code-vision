@@ -1,0 +1,7 @@
+{
+  "provider": "openai-compatible",
+  "baseUrl": "https://api.example.com/v1",
+  "apiKey": "YOUR_VISION_API_KEY",
+  "model": "vision-model-name",
+  "prompt": "Describe this image in detail, in Chinese. Focus on visible text, UI, objects, layout, and anything relevant to the user question."
+}
