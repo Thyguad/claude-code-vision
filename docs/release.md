@@ -1,6 +1,6 @@
 # 发布流程
 
-当前建议版本号：`0.1.0`。
+当前建议版本号：`0.1.1`。
 
 原因：
 
@@ -20,19 +20,19 @@ npm run package:dmg
 生成文件：
 
 ```text
-dist/ClaudeCode-Vision-0.1.0.dmg
+dist/ClaudeCode-Vision-0.1.1.dmg
 ```
 
 ## 创建 GitHub Release
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 
-gh release create v0.1.0 \
-  dist/ClaudeCode-Vision-0.1.0.dmg \
-  --title "ClaudeCode-Vision v0.1.0" \
-  --notes "首个公开预览版：为 Claude Code 添加图片理解能力的 macOS 菜单栏应用，兼容 cc-switch。"
+gh release create v0.1.1 \
+  dist/ClaudeCode-Vision-0.1.1.dmg \
+  --title "ClaudeCode-Vision v0.1.1" \
+  --notes "修复首次打开时识图模型未配置但显示已开启的问题。"
 ```
 
 ## macOS 安全提示

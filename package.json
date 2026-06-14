@@ -1,6 +1,6 @@
 {
   "name": "claude-code-vision",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A macOS menu bar vision proxy for Claude Code and cc-switch.",
   "type": "module",
   "main": "src/proxy.mjs",

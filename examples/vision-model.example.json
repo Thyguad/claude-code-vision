@@ -1,7 +1,7 @@
 {
-  "provider": "openai-compatible",
-  "baseUrl": "https://api.example.com/v1",
-  "apiKey": "YOUR_VISION_API_KEY",
-  "model": "vision-model-name",
-  "prompt": "Describe this image in detail, in Chinese. Focus on visible text, UI, objects, layout, and anything relevant to the user question."
+  "provider": "gemini",
+  "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+  "apiKey": "",
+  "model": "gemini-2.5-flash",
+  "prompt": "请用中文详细描述这张图片，重点关注可见文字、界面元素、物体、布局，以及和用户问题相关的信息。"
 }

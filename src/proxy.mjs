@@ -142,7 +142,7 @@ function setCachedDescription(key, mediaType, description) {
 function readVisionModelConfig() {
   const fileConfig = readJsonFile(VISION_MODEL_CONFIG);
   const provider = fileConfig.provider || process.env.VISION_PROVIDER || "gemini";
-  return {
+  const config = {
     provider,
     baseUrl: trimTrailingSlash(fileConfig.baseUrl || process.env.VISION_BASE_URL || ""),
     apiKey: fileConfig.apiKey || process.env.VISION_API_KEY || GEMINI_KEY,
@@ -150,6 +150,29 @@ function readVisionModelConfig() {
     prompt: fileConfig.prompt || process.env.VISION_PROMPT || "",
     maxOutputTokens: Number(fileConfig.maxOutputTokens || process.env.VISION_MAX_OUTPUT_TOKENS || 2048),
   };
+  return {
+    ...config,
+    configured: isVisionModelConfigured(config),
+  };
+}
+
+function isPlaceholderVisionValue(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return !normalized
+    || normalized === "your_vision_api_key"
+    || normalized === "your_gemini_api_key"
+    || normalized === "vision-model-name"
+    || normalized.includes("api.example.com");
+}
+
+function isVisionModelConfigured(config) {
+  if (!config || isPlaceholderVisionValue(config.apiKey) || isPlaceholderVisionValue(config.model)) {
+    return false;
+  }
+  if (config.provider === "openai-compatible" && isPlaceholderVisionValue(config.baseUrl)) {
+    return false;
+  }
+  return true;
 }
 
 function requestPath(req) {
@@ -709,6 +732,21 @@ async function processRequest(body) {
   }
 
   const visionConfig = readVisionModelConfig();
+  if (!visionConfig.configured) {
+    log(`⚠️  Found ${totalImages} image(s), but the vision model is not configured.`);
+    const modifiedMessages = JSON.parse(JSON.stringify(messages));
+    for (let i = imageBlocks.length - 1; i >= 0; i--) {
+      const img = imageBlocks[i];
+      modifiedMessages[img.msgIdx].content[img.blockIdx] = {
+        type: "text",
+        text: "[图片未分析] 识图模型尚未配置。请点击菜单栏 ClaudeCode-Vision 图标，选择“识图模型设置...”，填写视觉模型 API Key 和模型名称后重试。",
+      };
+    }
+    return {
+      body: normalizeBodyForUpstream({ ...body, messages: modifiedMessages }),
+      imagesProcessed: totalImages,
+    };
+  }
   log(`📸 Found ${totalImages} image(s) in request, describing via ${visionConfig.provider}...`);
 
   // Process each image
@@ -879,7 +917,7 @@ const server = http.createServer(async (req, res) => {
       provider: readUpstreamConfig().name,
       visionProvider: visionConfig.provider,
       visionModel: visionConfig.model,
-      visionConfigured: Boolean(visionConfig.apiKey),
+      visionConfigured: visionConfig.configured,
     });
     return;
   }

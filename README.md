@@ -57,7 +57,7 @@ xcode-select --install
 
 ### 方式一：下载 DMG
 
-从 GitHub Releases 下载 `ClaudeCode-Vision-0.1.0.dmg`，打开后把 `ClaudeCode-Vision.app` 拖到 `Applications`。
+从 GitHub Releases 下载 `ClaudeCode-Vision-0.1.1.dmg`，打开后把 `ClaudeCode-Vision.app` 拖到 `Applications`。
 
 首次启动时，应用会把内置代理运行时安装到：
 
@@ -169,7 +169,7 @@ npm run package:dmg
 产物位置：
 
 ```text
-dist/ClaudeCode-Vision-0.1.0.dmg
+dist/ClaudeCode-Vision-0.1.1.dmg
 ```
 
 修改后重新安装本地应用：

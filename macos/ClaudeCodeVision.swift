@@ -352,7 +352,11 @@ final class VisionApp: NSObject, NSApplicationDelegate {
     private func refreshStatus() {
         let status = runCtl("status").trimmingCharacters(in: .whitespacesAndNewlines)
         if status == "running" {
-            setServiceStatus(running: true, text: "状态：识图服务已开启")
+            if isVisionModelConfigured() {
+                setServiceStatus(running: true, text: "状态：识图服务已开启")
+            } else {
+                setServiceStatus(running: false, text: "状态：请先配置识图模型")
+            }
         } else {
             setServiceStatus(running: false, text: "状态：识图服务已停止")
         }
@@ -424,6 +428,26 @@ final class VisionApp: NSObject, NSApplicationDelegate {
             model: "gemini-2.5-flash",
             prompt: "请用中文详细描述这张图片，重点关注可见文字、界面元素、物体、布局，以及和用户问题相关的信息。"
         )
+    }
+
+    private func isPlaceholderVisionValue(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).lowercased()
+        return normalized.isEmpty
+            || normalized == "your_vision_api_key"
+            || normalized == "your_gemini_api_key"
+            || normalized == "vision-model-name"
+            || normalized.contains("api.example.com")
+    }
+
+    private func isVisionModelConfigured() -> Bool {
+        let config = loadVisionConfig()
+        if isPlaceholderVisionValue(config.apiKey) || isPlaceholderVisionValue(config.model) {
+            return false
+        }
+        if config.provider == "openai-compatible" && isPlaceholderVisionValue(config.baseUrl) {
+            return false
+        }
+        return true
     }
 
     private func saveVisionConfig(_ config: VisionConfig) {
