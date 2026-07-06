@@ -11,7 +11,7 @@
   <key>CFBundleDisplayName</key>
   <string>ClaudeCode-Vision</string>
   <key>CFBundleIconFile</key>
-  <string>AppIconPreview.png</string>
+  <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
