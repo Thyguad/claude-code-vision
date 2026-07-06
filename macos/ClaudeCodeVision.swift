@@ -169,6 +169,7 @@ final class VisionApp: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "识图模型设置...", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "刷新状态", action: #selector(refreshStatusAction), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "打开日志", action: #selector(openLog), keyEquivalent: "l"))
+        menu.addItem(NSMenuItem(title: "复制诊断信息", action: #selector(copyDiagnostics), keyEquivalent: "d"))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "退出", action: #selector(quit), keyEquivalent: "q"))
         self.statusItem.menu = menu
@@ -230,6 +231,20 @@ final class VisionApp: NSObject, NSApplicationDelegate {
 
     @objc private func openLog() {
         NSWorkspace.shared.open(URL(fileURLWithPath: logPath))
+    }
+
+    @objc private func copyDiagnostics() {
+        let diagnostics = runCtl("doctor").trimmingCharacters(in: .whitespacesAndNewlines)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(diagnostics.isEmpty ? "诊断信息为空" : diagnostics, forType: .string)
+        setServiceStatus(
+            running: isServiceRunning() && isVisionModelConfigured(),
+            text: "状态：诊断信息已复制"
+        )
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            self?.refreshStatus()
+        }
     }
 
     @objc private func openSettings() {
@@ -350,8 +365,7 @@ final class VisionApp: NSObject, NSApplicationDelegate {
     }
 
     private func refreshStatus() {
-        let status = runCtl("status").trimmingCharacters(in: .whitespacesAndNewlines)
-        if status == "running" {
+        if isServiceRunning() {
             if isVisionModelConfigured() {
                 setServiceStatus(running: true, text: "状态：识图服务已开启")
             } else {
@@ -367,6 +381,10 @@ final class VisionApp: NSObject, NSApplicationDelegate {
         statusItem.button?.title = ""
         statusItem.button?.toolTip = running ? "Claude Code 识图服务：已开启" : "Claude Code 识图服务：已停止"
         statusMenuItem?.title = text
+    }
+
+    private func isServiceRunning() -> Bool {
+        runCtl("status").trimmingCharacters(in: .whitespacesAndNewlines) == "running"
     }
 
     private func makeStatusImage(active: Bool) -> NSImage {

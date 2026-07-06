@@ -11,6 +11,7 @@ UPSTREAM_FILE="$PROXY_DIR/upstream.json"
 STATE_FILE="$PROXY_DIR/state.json"
 PID_FILE="$PROXY_DIR/proxy.pid"
 LOG_FILE="$CLAUDE_DIR/vision-proxy.log"
+VISION_MODEL_FILE="$PROXY_DIR/vision-model.json"
 CC_SWITCH_SETTINGS="$HOME/.cc-switch/settings.json"
 CC_SWITCH_DB="$HOME/.cc-switch/cc-switch.db"
 PORT="${PROXY_PORT:-18090}"
@@ -457,6 +458,211 @@ status() {
   fi
 }
 
+doctor() {
+  local running="false"
+  local node_version=""
+  local listener_pids=""
+  if is_running; then
+    running="true"
+  fi
+  if [ -n "$NODE_BIN" ] && [ -x "$NODE_BIN" ]; then
+    node_version="$("$NODE_BIN" --version 2>/dev/null || true)"
+  fi
+  listener_pids="$(lsof -nP -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]*$//' || true)"
+
+  /usr/bin/python3 - \
+    "$SETTINGS_FILE" \
+    "$UPSTREAM_FILE" \
+    "$VISION_MODEL_FILE" \
+    "$CC_SWITCH_SETTINGS" \
+    "$CC_SWITCH_DB" \
+    "$LOCAL_BASE_URL" \
+    "$PORT" \
+    "$PROXY_SCRIPT" \
+    "$NODE_BIN" \
+    "$node_version" \
+    "$running" \
+    "$listener_pids" \
+    "$LOG_FILE" <<'PY'
+import json
+import os
+import sqlite3
+import sys
+import time
+import urllib.error
+import urllib.request
+from urllib.parse import urlparse
+
+(
+    settings_path,
+    upstream_path,
+    vision_model_path,
+    cc_settings_path,
+    cc_db_path,
+    local_base,
+    port,
+    proxy_script,
+    node_bin,
+    node_version,
+    running,
+    listener_pids,
+    log_path,
+) = sys.argv[1:14]
+
+def read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def file_info(path):
+    exists = os.path.exists(path)
+    info = {"path": path, "exists": exists}
+    if exists:
+        try:
+            stat = os.stat(path)
+            info["sizeBytes"] = stat.st_size
+            info["modifiedAt"] = int(stat.st_mtime)
+        except Exception:
+            pass
+    return info
+
+def is_local_proxy_url(value):
+    value = (value or "").rstrip("/")
+    if not value:
+        return False
+    try:
+        parsed = urlparse(value)
+        host = (parsed.hostname or "").lower()
+        actual_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        return host in ("127.0.0.1", "localhost", "::1") and str(actual_port) == str(port)
+    except Exception:
+        return value == local_base
+
+def is_placeholder(value):
+    normalized = str(value or "").strip().lower()
+    return (
+        not normalized
+        or normalized == "your_vision_api_key"
+        or normalized == "your_gemini_api_key"
+        or normalized == "vision-model-name"
+        or "api.example.com" in normalized
+    )
+
+settings = read_json(settings_path)
+settings_env = settings.get("env", {})
+upstream = read_json(upstream_path)
+upstream_env = upstream.get("env", {})
+vision = read_json(vision_model_path)
+provider = vision.get("provider") or os.environ.get("VISION_PROVIDER") or "gemini"
+vision_base = vision.get("baseUrl") or os.environ.get("VISION_BASE_URL") or ""
+vision_key = vision.get("apiKey") or os.environ.get("VISION_API_KEY") or os.environ.get("GEMINI_API_KEY") or ""
+vision_model = vision.get("model") or os.environ.get("VISION_MODEL") or os.environ.get("GEMINI_MODEL") or "gemini-2.5-flash"
+vision_configured = not is_placeholder(vision_key) and not is_placeholder(vision_model)
+if provider == "openai-compatible" and is_placeholder(vision_base):
+    vision_configured = False
+
+health = {"reachable": False}
+try:
+    with urllib.request.urlopen(f"{local_base}/health", timeout=1.5) as response:
+        body = response.read(1024 * 64).decode("utf-8", "replace")
+        parsed = json.loads(body)
+        health = {
+            "reachable": True,
+            "status": parsed.get("status", ""),
+            "upstream": parsed.get("upstream", ""),
+            "provider": parsed.get("provider", ""),
+            "visionProvider": parsed.get("visionProvider", ""),
+            "visionModel": parsed.get("visionModel", ""),
+            "visionConfigured": parsed.get("visionConfigured", False),
+        }
+except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+    health["error"] = str(exc)
+
+cc_current_provider = ""
+try:
+    cc_current_provider = read_json(cc_settings_path).get("currentProviderClaude", "")
+except Exception:
+    pass
+
+cc_provider_name = ""
+if cc_current_provider and os.path.exists(cc_db_path):
+    try:
+        conn = sqlite3.connect(cc_db_path)
+        row = conn.execute(
+            "select name from providers where app_type='claude' and id=?",
+            (cc_current_provider,),
+        ).fetchone()
+        conn.close()
+        if row:
+            cc_provider_name = row[0]
+    except Exception:
+        pass
+
+diagnostics = {
+    "generatedAt": int(time.time()),
+    "service": {
+        "running": running == "true",
+        "localBaseUrl": local_base,
+        "port": int(port),
+        "listenerPids": listener_pids.split() if listener_pids else [],
+        "health": health,
+    },
+    "runtime": {
+        "nodePath": node_bin,
+        "nodeVersion": node_version,
+        "proxyScript": file_info(proxy_script),
+        "logFile": file_info(log_path),
+    },
+    "claudeSettings": {
+        "path": settings_path,
+        "exists": os.path.exists(settings_path),
+        "baseUrl": settings_env.get("ANTHROPIC_BASE_URL", ""),
+        "routedThroughLocalProxy": is_local_proxy_url(settings_env.get("ANTHROPIC_BASE_URL", "")),
+        "hasAuthToken": bool(settings_env.get("ANTHROPIC_AUTH_TOKEN")),
+        "model": (
+            settings_env.get("ANTHROPIC_MODEL")
+            or settings_env.get("ANTHROPIC_DEFAULT_SONNET_MODEL")
+            or settings_env.get("ANTHROPIC_DEFAULT_OPUS_MODEL")
+            or settings_env.get("ANTHROPIC_DEFAULT_HAIKU_MODEL")
+            or ""
+        ),
+    },
+    "ccSwitch": {
+        "settingsPath": cc_settings_path,
+        "settingsExists": os.path.exists(cc_settings_path),
+        "dbPath": cc_db_path,
+        "dbExists": os.path.exists(cc_db_path),
+        "currentProviderId": cc_current_provider,
+        "currentProviderName": cc_provider_name,
+    },
+    "upstream": {
+        "path": upstream_path,
+        "exists": os.path.exists(upstream_path),
+        "baseUrl": upstream.get("baseUrl", ""),
+        "name": upstream.get("name", ""),
+        "source": upstream.get("source", ""),
+        "hasAuthToken": bool(upstream.get("authToken") or upstream_env.get("ANTHROPIC_AUTH_TOKEN")),
+        "model": upstream.get("model", ""),
+        "modelOverride": upstream.get("modelOverride", ""),
+    },
+    "visionModel": {
+        "path": vision_model_path,
+        "exists": os.path.exists(vision_model_path),
+        "provider": provider,
+        "baseUrl": vision_base,
+        "model": vision_model,
+        "hasApiKey": not is_placeholder(vision_key),
+        "configured": vision_configured,
+        "hasCustomPrompt": bool(vision.get("prompt", "")),
+    },
+}
+
+print(json.dumps(diagnostics, indent=2, ensure_ascii=False))
+PY
+}
+
 case "${1:-status}" in
   start) start ;;
   foreground) foreground ;;
@@ -464,5 +670,6 @@ case "${1:-status}" in
   restart) stop_proxy_process; start ;;
   status) status ;;
   upstream) cat "$UPSTREAM_FILE" ;;
-  *) echo "Usage: $0 {start|foreground|stop|restart|status|upstream}" >&2; exit 2 ;;
+  doctor) doctor ;;
+  *) echo "Usage: $0 {start|foreground|stop|restart|status|upstream|doctor}" >&2; exit 2 ;;
 esac

@@ -1,6 +1,6 @@
 # 发布流程
 
-当前建议版本号：`0.1.1`。
+当前建议版本号：`0.1.2`。
 
 原因：
 
@@ -20,19 +20,19 @@ npm run package:dmg
 生成文件：
 
 ```text
-dist/ClaudeCode-Vision-0.1.1.dmg
+dist/ClaudeCode-Vision-0.1.2.dmg
 ```
 
 ## 创建 GitHub Release
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 
-gh release create v0.1.1 \
-  dist/ClaudeCode-Vision-0.1.1.dmg \
-  --title "ClaudeCode-Vision v0.1.1" \
-  --notes "修复首次打开时识图模型未配置但显示已开启的问题。"
+gh release create v0.1.2 \
+  dist/ClaudeCode-Vision-0.1.2.dmg \
+  --title "ClaudeCode-Vision v0.1.2" \
+  --notes "新增脱敏诊断信息，方便排查 Node、上游、端口和识图模型配置问题。"
 ```
 
 ## macOS 安全提示

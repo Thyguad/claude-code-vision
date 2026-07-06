@@ -8,7 +8,7 @@ ClaudeCode-Vision 会在本机启动一个 Anthropic 兼容代理。Claude Code 
 
 ## 功能
 
-- macOS 菜单栏应用，可启动、停止、重启和查看服务状态。
+- macOS 菜单栏应用，可启动、停止、重启、查看服务状态和复制诊断信息。
 - 与 `cc-switch` 配合使用，自动跟随 Claude provider 切换。
 - 以 `cc-switch` 当前 Claude provider 作为真实上游。
 - 如果 provider 配置被本地代理地址污染，会尝试自动恢复。
@@ -57,7 +57,7 @@ xcode-select --install
 
 ### 方式一：下载 DMG
 
-从 GitHub Releases 下载 `ClaudeCode-Vision-0.1.1.dmg`，打开后把 `ClaudeCode-Vision.app` 拖到 `Applications`。
+从 GitHub Releases 下载 `ClaudeCode-Vision-0.1.2.dmg`，打开后把 `ClaudeCode-Vision.app` 拖到 `Applications`。
 
 首次启动时，应用会把内置代理运行时安装到：
 
@@ -169,7 +169,7 @@ npm run package:dmg
 产物位置：
 
 ```text
-dist/ClaudeCode-Vision-0.1.1.dmg
+dist/ClaudeCode-Vision-0.1.2.dmg
 ```
 
 修改后重新安装本地应用：
@@ -197,6 +197,14 @@ bash scripts/install.sh
 ```bash
 ~/.claude/vision-proxy/visionctl.sh status
 ```
+
+复制或查看脱敏诊断信息：
+
+```bash
+~/.claude/vision-proxy/visionctl.sh doctor
+```
+
+也可以在菜单栏里选择 `复制诊断信息`，再把剪贴板内容贴到 issue 或聊天里排查问题。
 
 查看当前捕获到的上游 provider：
 
