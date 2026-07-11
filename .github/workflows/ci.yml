@@ -57,12 +57,12 @@ jobs:
           if (-not (Test-Path dist/ClaudeCode-Vision-windows-x64/runtime/node_modules/undici)) { throw "production dependencies missing" }
           if (-not (Test-Path dist/ClaudeCode-Vision-windows-x64/BUILD-INFO.json)) { throw "build metadata missing" }
           Compress-Archive -Path dist/ClaudeCode-Vision-windows-x64/* -DestinationPath dist/ClaudeCode-Vision-windows-x64.zip
-          (Get-FileHash dist/ClaudeCode-Vision-windows-x64.zip -Algorithm SHA256).Hash.ToLower() + "  ClaudeCode-Vision-windows-x64.zip" | Set-Content dist/ClaudeCode-Vision-windows-x64.zip.sha256
+          (Get-FileHash dist/ClaudeCode-Vision-windows-x64.zip -Algorithm SHA256).Hash.ToLower() + "  ClaudeCode-Vision-windows-x64.zip" | Set-Content dist/ClaudeCode-Vision-windows-x64.zip.sha256 -NoNewline -Encoding ascii
           choco install innosetup --no-progress -y
           $version = (Get-Content package.json | ConvertFrom-Json).version
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" windows/installer/ClaudeCodeVision.iss
           $installer = Get-ChildItem dist/installer/*-setup.exe | Select-Object -First 1
-          (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower() + "  " + $installer.Name | Set-Content ($installer.FullName + ".sha256")
+          (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower() + "  " + $installer.Name | Set-Content ($installer.FullName + ".sha256") -NoNewline -Encoding ascii
       - uses: actions/upload-artifact@v4
         with:
           name: ClaudeCode-Vision-windows-x64
