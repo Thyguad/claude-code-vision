@@ -5,11 +5,15 @@
   "type": "module",
   "main": "src/proxy.mjs",
   "scripts": {
-    "check": "node --check src/proxy.mjs && bash -n scripts/visionctl.sh && bash -n scripts/install.sh && bash -n scripts/build-app.sh && bash -n scripts/package-dmg.sh",
+    "test": "node --test",
+    "check:node": "node --check src/proxy.mjs && node --check src/service/cli.mjs && node --check src/service/controller.mjs && node --check scripts/package-windows-runtime.mjs && node --check scripts/package-windows-portable.mjs && node --test",
+    "check": "npm run check:node && bash -n scripts/visionctl.sh && bash -n scripts/install.sh && bash -n scripts/build-app.sh && bash -n scripts/package-dmg.sh",
     "check:macos": "swiftc macos/ClaudeCodeVision.swift -o /tmp/ClaudeCode-Vision-check",
     "build:app": "bash scripts/build-app.sh",
     "package:dmg": "bash scripts/package-dmg.sh",
-    "install:app": "bash scripts/install.sh"
+    "install:app": "bash scripts/install.sh",
+    "package:windows-runtime": "node scripts/package-windows-runtime.mjs",
+    "package:windows-portable": "node scripts/package-windows-portable.mjs"
   },
   "keywords": [
     "claude-code",

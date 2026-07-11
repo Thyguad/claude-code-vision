@@ -39,6 +39,7 @@ const IMAGE_CACHE_FILE = process.env.VISION_IMAGE_CACHE
   || path.join(os.homedir(), ".claude", "vision-proxy", "image-cache.json");
 const VISION_MODEL_CONFIG = process.env.VISION_MODEL_CONFIG
   || path.join(os.homedir(), ".claude", "vision-proxy", "vision-model.json");
+const ROUTING_GATE_FILE = process.env.VISION_ROUTING_GATE_FILE || "";
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -429,6 +430,9 @@ function syncUpstreamFromSettingsIfNeeded(force = false) {
 }
 
 function maintainLocalRouting(reason = "watcher") {
+  if (ROUTING_GATE_FILE && !fs.existsSync(ROUTING_GATE_FILE)) {
+    return;
+  }
   const providerId = readCurrentCcSwitchProviderId();
   const settings = readJsonFile(CLAUDE_SETTINGS_FILE);
   const currentBaseUrl = trimTrailingSlash(settings?.env?.ANTHROPIC_BASE_URL || "");

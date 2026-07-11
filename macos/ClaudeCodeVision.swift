@@ -116,7 +116,9 @@ final class VisionApp: NSObject, NSApplicationDelegate {
             "proxy.mjs",
             "visionctl.sh",
             "package.json",
-            "package-lock.json"
+            "package-lock.json",
+            "core",
+            "service"
         ]
         for file in files {
             let source = "\(runtimePath)/\(file)"

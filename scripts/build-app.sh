@@ -15,6 +15,8 @@ cp "$APP_SOURCE_DIR/Contents/Info.plist" "$APP_BUILD_DIR/Contents/Info.plist"
 cp -R "$APP_SOURCE_DIR/Contents/Resources/." "$APP_BUILD_DIR/Contents/Resources/"
 
 cp "$ROOT_DIR/src/proxy.mjs" "$RUNTIME_DIR/proxy.mjs"
+cp -R "$ROOT_DIR/src/core" "$RUNTIME_DIR/core"
+cp -R "$ROOT_DIR/src/service" "$RUNTIME_DIR/service"
 cp "$ROOT_DIR/scripts/visionctl.sh" "$RUNTIME_DIR/visionctl.sh"
 cp "$ROOT_DIR/package.json" "$RUNTIME_DIR/package.json"
 cp "$ROOT_DIR/package-lock.json" "$RUNTIME_DIR/package-lock.json"
